@@ -1,18 +1,12 @@
 import yfinance as yf
 import sqlite3
 import pandas as pd
+import sys
+
 
 conn = sqlite3.connect('stocks.db')
-data = yf.download('AAPL', period='1mo', interval='1d', rounding=True)
-data.columns = data.columns.get_level_values(0) # Flatten the multi-level columns
-# data.to_sql('AAPL', conn, if_exists='replace', index=True)
-data.index = data.index.strftime('%Y-%m-%d')
-data_list = []
-for row in data.itertuples(name=None):
-    data_list.append(("AAPL",) + row)
 
-# print(data_list)
-
+# conn.execute('DROP TABLE AAPL')
 conn.execute('''CREATE TABLE IF NOT EXISTS AAPL (
     Symbol TEXT,
     Date TEXT,
@@ -23,14 +17,31 @@ conn.execute('''CREATE TABLE IF NOT EXISTS AAPL (
     Volume INTEGER,
     PRIMARY KEY (Symbol, Date)
 )''')
+start_date = conn.execute('SELECT MAX(Date) FROM AAPL').fetchone()[0]
+print(start_date)
+
+if start_date is None:
+     data = yf.download('AAPL', period='1mo', interval='1d', rounding=True)
+else:
+     data = yf.download('AAPL', interval='1d', rounding=True, start=start_date)
+if data.empty:
+     print("No new data, nothing written")
+     conn.close()
+     sys.exit()
+
+data.columns = data.columns.get_level_values(0) # Flatten the multi-level columns
+# data.to_sql('AAPL', conn, if_exists='replace', index=True) 
+data.index = data.index.strftime('%Y-%m-%d')
+data_list = []
+for row in data.itertuples(name=None):
+    data_list.append(("AAPL",) + row)
+
 print(conn.execute('SELECT COUNT(*) FROM AAPL').fetchone()[0])
 conn.executemany('INSERT OR REPLACE INTO AAPL VALUES (?, ?, ?, ?, ?, ?, ?)', data_list)
 print(conn.execute('SELECT COUNT(*) FROM AAPL').fetchone()[0])
-for row in conn.execute('SELECT * FROM AAPL'):
-    print(row)
 
-
+# for row in conn.execute('SELECT * FROM AAPL'):
+#      print(row)
 
 conn.commit()
-
 conn.close()
