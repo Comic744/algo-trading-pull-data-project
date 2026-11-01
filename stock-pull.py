@@ -1,9 +1,13 @@
 import yfinance as yf
 import sqlite3
 import sys
+import os
 
-sqlite3_file = "stocks.db"
-symbols = ["AAPL", "ZZZZZZz", "MSFT"]
+
+sqlite3_file = os.environ.get("DB_PATH","stocks.db")
+
+symbols = ["AAPL", "MSFT"]
+
 
 def get_last_date(symbol, conn):
      return conn.execute('SELECT MAX(Date) FROM STOCKS WHERE Symbol = ?', (symbol,)).fetchone()[0]
