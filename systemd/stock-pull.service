@@ -3,6 +3,4 @@ Description=Pull stock data
 
 [Service]
 Type=oneshot
-WorkingDirectory=%h/dev/algo-trading-pull-data-project
-Environment=PYTHONUNBUFFERED=1
-ExecStart=%h/dev/algo-trading-pull-data-project/.venv/bin/python %h/dev/algo-trading-pull-data-project/stock-pull.py
+ExecStart=/usr/bin/docker run --rm -v %h/dev/algo-trading-pull-data-project/data:/app/data --user %U:%G stock-pull
